@@ -1,0 +1,13 @@
+name: gmvc
+env: prod
+
+sock_file: /run/gmvc.socket
+port: 37221
+
+
+
+
+db:
+    default:
+        type: mysql
+        dsn: root:d@(192.168.9.3:3306)/tank?parseTime=true&charset=utf8&loc=Local
