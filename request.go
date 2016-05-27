@@ -1,7 +1,7 @@
 package gmvc
 
 import (
-    "github.com/gorilla/websocket"
+    ws "github.com/gorilla/websocket"
     "encoding/json"
     "html/template"
     "net/http"
@@ -38,7 +38,7 @@ type Request struct {
     *http.Request
     Session *Session
     Cookies []*http.Cookie
-    Bag     *lib.Tree
+    Bag     *Tree
     params  []string
     ws      *ws.Conn
     rw      http.ResponseWriter
@@ -48,12 +48,12 @@ func newRequest(w http.ResponseWriter, r *http.Request) *Request {
     return &Request{
         Request: r,
         Cookies: r.Cookies(),
-        Bag: lib.NewTree(),
+        Bag: NewTree(),
         rw: w,
     }
 }
 
-func (r *Request) IsAjax() bool {
+func (r *Request) IsXMLHttpRequest() bool {
     return r.Header.Get("X-Requested-With") == "XMLHttpRequest"
 }
 
@@ -110,27 +110,25 @@ func (r *Request) Cookie(name string) *http.Cookie {
 /*
 websocket action
 */
-type Wsa func(wsm *Wsm)
+type WSAction func(wsm *WSMessage)
 
-var WsaMap = make(map[string]Wsa)
+var WsaMap = make(map[string]WSAction)
 
 /*
 websocket message
 */
-type Wsm struct {
+type WSMessage struct {
     Name    string
     Query   map[string]string
     Data    []byte
-    Request *Request          `codec:"-"`
-    Bag     *lib.Tree         `codec:"-"`
+    Request *Request
+    Bag     *Tree
 }
 
 
-var msgpackHandle = new(codec.MsgpackHandle)
-
-func (r *Request) newWsm(raw []byte) *Wsm {
+func (r *Request) newWSMessage(raw []byte) *WSMessage {
     parts := bytes.Split(raw, bytes.TrimLeft(raw, "\n"))
-    wsm := &Wsm{Name: string(parts[0]), Request: r, Bag: lib.NewTree()}
+    wsm := &WSMessage{Name: string(parts[0]), Request: r, Bag: NewTree()}
     if len(parts[1]) > 0 {
         values, err := url.ParseQuery(string(parts[1]))
         if err == nil {
@@ -148,34 +146,31 @@ func (r *Request) newWsm(raw []byte) *Wsm {
     return wsm
 }
 
-func (r *Request) SendWsm(name string, query map[string]interface{}, data interface{}) {
+func (r *Request) SendWSMessage(name string, query map[string]interface{}, data interface{}) {
     q := make([]string, 0, len(query))
     for k, v := range query {
         q = append(q, fmt.Sprintf("%s=%v", k, v))
     }
-    var d []byte
-    if data != nil {
-        var enc *codec.Encoder
-        enc = codec.NewEncoderBytes(&d, msgpackHandle)
-        if err := enc.Encode(data); err != nil {
-            panic("gmvc: " + err.Error())
-        }
+
+    json, err := json.Marshal(data)
+    if err != nil {
+        log.Println(err.Error());
     }
-    ws.Message.Send(r.ws, name + "\n" + strings.Join(q, "&") + "\n" + string(d) + "\n")
+
+    r.ws.WriteMessage(ws.TextMessage, name + "\n" + strings.Join(q, "&") + "\n" + string(json) + "\n")
 }
 
-func (wsm *Wsm) Send(name string, query map[string]interface{}, data interface{}) {
-    wsm.Request.SendWsm(name, query, data)
+func (wsm *WSMessage) Send(name string, query map[string]interface{}, data interface{}) {
+    wsm.Request.SendWSMessage(name, query, data)
 }
 
-func (wsm *Wsm) Decode(v interface{}) {
-    dec := codec.NewDecoderBytes(wsm.Data, msgpackHandle)
-    if err := dec.Decode(v); err != nil {
-        panic("gmvc: " + err.Error())
+func (wsm *WSMessage) Decode(v interface{}) {
+    if err := json.Unmarshal(wsm.Data, v); err != nil {
+        log.Println(err.Error())
     }
 }
 
-func (wsm *Wsm) String(key string) (string, bool) {
+func (wsm *WSMessage) String(key string) (string, bool) {
     if len(wsm.Query) > 0 {
         v, has := wsm.Query[key]
         return v, has
@@ -183,7 +178,7 @@ func (wsm *Wsm) String(key string) (string, bool) {
     return "", false
 }
 
-func (wsm *Wsm) Int(k string) (int, bool) {
+func (wsm *WSMessage) Int(k string) (int, bool) {
     if v, has := wsm.String(k); has {
         if i, err := strconv.ParseInt(v, 10, 0); err == nil {
             return int(i), true
@@ -192,7 +187,7 @@ func (wsm *Wsm) Int(k string) (int, bool) {
     return 0, false
 }
 
-func (wsm *Wsm) Int64(k string) (int64, bool) {
+func (wsm *WSMessage) Int64(k string) (int64, bool) {
     if v, has := wsm.String(k); has {
         if i, err := strconv.ParseInt(v, 10, 64); err == nil {
             return i, true
@@ -201,7 +196,7 @@ func (wsm *Wsm) Int64(k string) (int64, bool) {
     return 0, false
 }
 
-func (wsm *Wsm) Float(k string) (float64, bool) {
+func (wsm *WSMessage) Float(k string) (float64, bool) {
     if v, has := wsm.String(k); has {
         if f, err := strconv.ParseFloat(v, 64); err == nil {
             return f, true
@@ -210,13 +205,14 @@ func (wsm *Wsm) Float(k string) (float64, bool) {
     return 0, false
 }
 
-func (r *Request) handleWs() {
+func (r *Request) handleWSMessage() {
     if r.ws == nil {
         panic("gmvc: normal request no websocket")
     }
     for {
         var raw []byte
-        if err := ws.Message.Receive(r.ws, &raw); err != nil {
+        var err error
+        if _, raw, err = r.ws.ReadMessage(); err != nil {
             log.Println(err)
             return
         }
@@ -226,7 +222,7 @@ func (r *Request) handleWs() {
                     log.Println("gmvc: websocket ", err)
                 }
             }()
-            var wsm = r.newWsm(raw)
+            var wsm = r.newWSMessage(raw)
             if wsa, has := WsaMap[wsm.Name]; has {
                 wsa(wsm)
             } else {
@@ -284,8 +280,10 @@ func (r *Request) HtmlResponse(name string, data interface{}) *Response {
 func (r *Request) JsonResponse(data interface{}) *Response {
     json, err := json.Marshal(data)
     if err != nil {
-        panic("gmvc: " + err.Error())
+        //TODO 错误处理
+        log.Println(err.Error());
     }
+
     p := r.newResponse()
     p.rw.Header().Set("Content-Type", "application/json;")
     p.body = json

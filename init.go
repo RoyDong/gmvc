@@ -9,22 +9,20 @@ import (
 var (
     AppName  string
     Version  string
-    SockFile string
     Pwd      string
-    Daemon   bool
     Conf     *Tree
     ConfDir  = "config/"
     TplDir   = "template/"
     Env      = "prod"
-    Port     = 37221
+    Host     = "0.0.0.0"
+    Port     = 80
 )
 
+
 func initConfig() {
-    confile := "config.yml"
+    confile := "config.json"
     for i, arg := range os.Args {
-        if arg == "-d" {
-            Daemon = true
-        } else if arg == "-c" && i+1 < len(os.Args) {
+        if arg == "-c" && i+1 < len(os.Args) {
             confile = os.Args[i+1]
             if i := strings.LastIndex(confile, "/"); i >= 0 {
                 Pwd = confile[:i+1]
@@ -52,13 +50,10 @@ func initConfig() {
         Env = env
     }
 
-    if v, ok := Conf.String("session_cookie_name"); ok {
-        SessionCookieName = v
+    if v, ok := Conf.String("host"); ok {
+        Host = v
     }
 
-    if v, ok := Conf.String("sock_file"); ok {
-        SockFile = v
-    }
     if v, ok := Conf.Int("port"); ok {
         Port = v
     }
@@ -79,10 +74,6 @@ func initConfig() {
         }
         ConfDir = dir
     }
-
-    if v, ok := Conf.String("default_db"); ok {
-        DefaultDB = v
-    }
 }
 
 func Init() {
@@ -90,3 +81,4 @@ func Init() {
     initConfig()
     event.Trigger("after_init")
 }
+

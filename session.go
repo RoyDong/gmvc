@@ -18,18 +18,18 @@ var (
 )
 
 type Session struct {
-    *Tree
-    Id        string
-    UpdatedAt time.Time
+    key       string
+    storage   *redis.Client
+    updated   time.Time
 }
 
 var sessions = make(map[string]*Session)
 
 func NewSession(r *Request) *Session {
     s := &Session{
-        Tree:      NewTree(),
-        Id:        sessionId(r),
-        UpdatedAt: time.Now(),
+        storage:    NewTree(),
+        key:        sessionId(r),
+        updated:    time.Now(),
     }
     //set cookie
     sessions[s.Id] = s

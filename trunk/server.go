@@ -1,12 +1,11 @@
 package gmvc
 
 import (
-    "github.com/gorilla/websocket"
+    ws "github.com/gorilla/websocket"
     "fmt"
     "net"
     "net/http"
     "log"
-    "os"
     "sync"
     "strings"
 )
@@ -17,7 +16,7 @@ events:
     after_init
     run
 
-    request  
+    request
     action
     respond
 */
@@ -42,7 +41,6 @@ var ErrorAction = func(r *Request, c int, m string) *Response {
 }
 
 type handler struct {
-    ws.Server
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -89,17 +87,9 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func listener() net.Listener {
     var err error
     var lsr net.Listener
-    if len(SockFile) > 0 {
-        os.Remove(SockFile)
-        lsr, err = net.Listen("unix", SockFile)
-        if err == nil {
-            os.Chmod(SockFile, os.ModePerm)
-            return lsr
-        }
-    }
-    lsr, err = net.Listen("tcp", fmt.Sprintf(":%d", Port))
+    lsr, err = net.Listen("tcp", fmt.Sprintf("%v:%v", Host, Port))
     if err != nil {
-        log.Fatal("gmvc:", err)
+        panic(err.Error())
     }
     return lsr
 }
