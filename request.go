@@ -3,7 +3,6 @@ package gmvc
 import (
     ws "github.com/gorilla/websocket"
     "encoding/json"
-    "html/template"
     "net/http"
     "net/url"
     "strconv"
@@ -26,6 +25,8 @@ const (
 )
 
 var tpl = NewTemplate()
+
+
 
 func TemplateFuncs(funcs map[string]interface{}) {
     tpl.AddFuncs(funcs)
@@ -112,7 +113,8 @@ websocket action
 */
 type WSAction func(wsm *WSMessage)
 
-var WsaMap = make(map[string]WSAction)
+var WSActionMap = make(map[string]WSAction)
+
 
 /*
 websocket message
@@ -207,7 +209,7 @@ func (wsm *WSMessage) Float(k string) (float64, bool) {
 
 func (r *Request) handleWSMessage() {
     if r.ws == nil {
-        panic("gmvc: normal request no websocket")
+        panic("gmvc: bad websocket connection")
     }
     for {
         var raw []byte
@@ -223,7 +225,7 @@ func (r *Request) handleWSMessage() {
                 }
             }()
             var wsm = r.newWSMessage(raw)
-            if wsa, has := WsaMap[wsm.Name]; has {
+            if wsa, has := WSActionMap[wsm.Name]; has {
                 wsa(wsm)
             } else {
                 log.Println("gmvc: wsa " + wsm.Name + "not found")
@@ -251,29 +253,9 @@ func (r *Request) TextResponse(txt string) *Response {
     return p
 }
 
-func (r *Request) HtmlResponse(name string, data interface{}) *Response {
-    var t *template.Template
-    buffer := &bytes.Buffer{}
+func (r *Request) HtmlResponse(layout, name string, data interface{}) *Response {
     resp := r.newResponse()
-    html := NewHtml()
-    html.Data = data
-    t = tpl.Template(name)
-    if t == nil {
-        panic("gmvc: " + name + " template not found")
-    }
-    t.Execute(buffer, html)
-
-    //has layout
-    if html.layout != "" {
-        t = tpl.Template(html.layout)
-        if t == nil {
-            panic("gmvc: " + html.layout + " template not found")
-        }
-        html.Content = template.HTML(buffer.Bytes())
-        buffer.Truncate(0)
-        t.Execute(buffer, html)
-    }
-    resp.body = buffer.Bytes()
+    resp.body = tpl.render(layout, name, data)
     return resp
 }
 

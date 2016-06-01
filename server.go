@@ -20,11 +20,7 @@ events:
     action
     respond
 */
-var event = NewEvent()
-
-func AddHandler(name string, handler EventHandler) {
-    event.AddHandler(name, handler)
-}
+var Event = NewEvent()
 
 var route = &Route{}
 
@@ -41,6 +37,7 @@ var ErrorAction = func(r *Request, c int, m string) *Response {
 }
 
 type handler struct {
+    ws.Upgrader
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -49,25 +46,25 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
     //websocket
     if strings.ToLower(r.Header.Get("Upgrade")) == "websocket" {
-        if conn := h.Conn(w, r); conn != nil {
-            req.ws = conn
-            defer conn.Close()
-            event.Trigger("ws_connect", req)
-            defer event.Trigger("ws_close", req)
-            req.handleWs()
+        conn, err := h.Upgrade(w, r, nil)
+        if err != nil {
+            panic(err.Error())
         }
+
+        req.ws = conn
+        defer conn.Close()
+        Event.Trigger("ws_connect", req)
+        defer Event.Trigger("ws_close", req)
+        req.handleWSMessage()
         return
     }
 
     //normal request
-    event.Trigger("request", req)
-    if Env == "dev" {
-        tpl.Load(TplDir)
-    }
+    Event.Trigger("request", req)
 
     var act Action
     act, req.params = route.Parse(r.URL.Path)
-    event.Trigger("action", req)
+    Event.Trigger("action", req)
 
     var resp *Response
     if act == nil {
@@ -76,7 +73,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         resp = ErrorAction(req, resp.code, resp.message)
     }
 
-    event.Trigger("respond", req, resp)
+    Event.Trigger("response", req, resp)
     if resp.status == 301 || resp.status == 302 {
         http.Redirect(w, r, resp.message, resp.status)
     } else {
@@ -98,18 +95,16 @@ var wg = &sync.WaitGroup{}
 
 func serve() {
     defer wg.Done()
-    srv := &http.Server{Handler: &handler{ws.Server{}}}
+    srv := &http.Server{Handler: &handler{ws.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024,}}}
     lsr := listener()
     defer lsr.Close()
     log.Println(srv.Serve(lsr))
 }
 
 func Run() {
-    tpl.Load(TplDir)
-    go sessionExpire()
     wg.Add(1)
     go serve()
     fmt.Println("work work")
-    event.Trigger("run")
+    Event.Trigger("run")
     wg.Wait()
 }

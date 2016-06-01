@@ -12,7 +12,6 @@ var (
     Pwd      string
     Conf     *Tree
     ConfDir  = "config/"
-    TplDir   = "template/"
     Env      = "prod"
     Host     = "0.0.0.0"
     Port     = 80
@@ -66,7 +65,7 @@ func initConfig() {
         if dir[len(dir)-1] != '/' {
             dir = dir + "/"
         }
-        TplDir = dir
+        tpl.SetRootDir(dir)
     }
     if dir, ok := Conf.String("config_dir"); ok {
         if dir[len(dir)-1] != '/' {
