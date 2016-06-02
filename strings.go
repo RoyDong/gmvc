@@ -6,6 +6,7 @@ import (
     "math/rand"
     "os"
     "regexp"
+    "html/template"
 )
 
 const (
@@ -80,3 +81,8 @@ func LoadFile(filename string) ([]byte, error) {
     file.Read(text)
     return text, nil
 }
+
+func Html(str string) template.HTML {
+    return template.HTML(str)
+}
+

@@ -12,24 +12,13 @@ import (
     "log"
 )
 
-const (
-    StatusBadRequest              = 400
-    StatusPaymentRequired         = 402
-    StatusForbidden               = 403
-    StatusNotFound                = 404
-    StatusUnsupportedMediaType    = 415
-    StatusInternalServerError     = 500
-    StatusServiceUnavailable      = 503
-    StatusGatewayTimeout          = 504
-    StatusHTTPVersionNotSupported = 505
-)
-
-var tpl = NewTemplate()
-
+var tpl = newHtml()
 
 
 func TemplateFuncs(funcs map[string]interface{}) {
-    tpl.AddFuncs(funcs)
+    for k, f := range funcs {
+        tpl.funcs[k] = f
+    }
 }
 
 /*
@@ -301,3 +290,5 @@ func (p *Response) SetCookie(c *http.Cookie) {
 func (p *Response) Body() []byte {
     return p.body
 }
+
+

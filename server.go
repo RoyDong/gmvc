@@ -84,7 +84,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func listener() net.Listener {
     var err error
     var lsr net.Listener
-    lsr, err = net.Listen("tcp", fmt.Sprintf("%v:%v", Host, Port))
+    conf := Conf.Tree("server")
+    lsr, err = net.Listen("tcp", fmt.Sprintf("%v:%v", conf.String("host"), conf.Int64("port")))
     if err != nil {
         panic(err.Error())
     }

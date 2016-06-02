@@ -7,14 +7,9 @@ import (
 )
 
 var (
-    AppName  string
-    Version  string
     Pwd      string
     Conf     *Tree
-    ConfDir  = "config/"
     Env      = "prod"
-    Host     = "0.0.0.0"
-    Port     = 80
 )
 
 
@@ -41,37 +36,19 @@ func initConfig() {
         os.Chdir(Pwd)
     }
 
-    if name, ok := Conf.String("name"); ok {
-        AppName = name
-    }
-
     if env, ok := Conf.String("env"); ok {
         Env = env
     }
 
-    if v, ok := Conf.String("host"); ok {
-        Host = v
+    if v, ok := Conf.String("template.ext"); ok {
+        tpl.ext = v
     }
 
-    if v, ok := Conf.Int("port"); ok {
-        Port = v
-    }
-
-    if v, ok := Conf.String("template_ext"); ok {
-        TemplateExt = v
-    }
-
-    if dir, ok := Conf.String("template_dir"); ok {
+    if dir, ok := Conf.String("template.dir"); ok {
         if dir[len(dir)-1] != '/' {
             dir = dir + "/"
         }
-        tpl.SetRootDir(dir)
-    }
-    if dir, ok := Conf.String("config_dir"); ok {
-        if dir[len(dir)-1] != '/' {
-            dir = dir + "/"
-        }
-        ConfDir = dir
+        tpl.dir = dir
     }
 }
 
