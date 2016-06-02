@@ -120,6 +120,9 @@ type WSMessage struct {
 func (r *Request) newWSMessage(raw []byte) *WSMessage {
     parts := bytes.Split(bytes.Trim(raw, "\n"), []byte("\n"))
     wsm := &WSMessage{Name: string(parts[0]), Request: r, Bag: NewTree()}
+    if len(parts) < 2 {
+        log.Println("gmvc: bad websocket message format")
+    }
     if len(parts[1]) > 0 {
         values, err := url.ParseQuery(string(parts[1]))
         if err == nil {
