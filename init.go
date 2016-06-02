@@ -14,7 +14,7 @@ var (
 
 
 func initConfig() {
-    confile := "config.json"
+    confile := "config.yml"
     for i, arg := range os.Args {
         if arg == "-c" && i+1 < len(os.Args) {
             confile = os.Args[i+1]
@@ -25,7 +25,7 @@ func initConfig() {
     }
 
     Conf = NewTree()
-    if err := Conf.LoadJson(confile, false); err != nil {
+    if err := Conf.LoadYaml(confile, false); err != nil {
         log.Fatal("gmvc: ", err)
     }
 
@@ -53,8 +53,8 @@ func initConfig() {
 }
 
 func Init() {
-    event.Trigger("before_init")
+    Hook.Trigger("before_init")
     initConfig()
-    event.Trigger("after_init")
+    Hook.Trigger("after_init")
 }
 

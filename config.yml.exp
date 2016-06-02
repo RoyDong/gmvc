@@ -1,9 +1,32 @@
 name: gmvc
 env: prod
 
-sock_file: /run/gmvc.socket
-port: 37221
 
+server:
+    host: "0.0.0.0"
+    port: 80
+
+template:
+    dir: templates/
+    ext: html
+
+
+session:
+    prefix: session/
+    domain: /
+    keyname: gmvcsession
+    expires: 30
+    redis:
+        ip: 192.168.1.31
+        port: 6379
+        timeout: 3
+
+
+redis:
+    main:
+        ip: 192.168.1.31
+        port: 6379
+        timeout: 3
 
 
 

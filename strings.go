@@ -6,7 +6,7 @@ import (
     "math/rand"
     "os"
     "regexp"
-    "html/template"
+    yaml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -49,17 +49,17 @@ func LoadJson(v interface{}, filename string) error {
 }
 
 
-/*
+/**
 LoadYaml reads data from a yaml format file to v
+*/
 func LoadYaml(v interface{}, filename string) error {
     text, err := LoadFile(filename)
     if err != nil {
         return err
     }
 
-    return goyaml.Unmarshal(text, v)
+    return yaml.Unmarshal(text, v)
 }
-*/
 
 
 /*
@@ -80,9 +80,5 @@ func LoadFile(filename string) ([]byte, error) {
     text := make([]byte, fileInfo.Size())
     file.Read(text)
     return text, nil
-}
-
-func Html(str string) template.HTML {
-    return template.HTML(str)
 }
 

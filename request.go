@@ -148,7 +148,7 @@ func (r *Request) SendWSMessage(name string, query map[string]interface{}, data 
         log.Println(err.Error());
     }
 
-    r.ws.WriteMessage(ws.TextMessage, name + "\n" + strings.Join(q, "&") + "\n" + string(json) + "\n")
+    r.ws.WriteMessage(ws.TextMessage, []byte(name + "\n" + strings.Join(q, "&") + "\n" + string(json) + "\n"))
 }
 
 func (wsm *WSMessage) Send(name string, query map[string]interface{}, data interface{}) {
@@ -242,9 +242,9 @@ func (r *Request) TextResponse(txt string) *Response {
     return p
 }
 
-func (r *Request) HtmlResponse(layout, name string, data interface{}) *Response {
+func (r *Request) HtmlResponse(data interface{}, args ...string) *Response {
     resp := r.newResponse()
-    resp.body = tpl.render(layout, name, data)
+    resp.body = tpl.render(data, args...)
     return resp
 }
 

@@ -20,7 +20,7 @@ events:
     action
     respond
 */
-var Event = NewEvent()
+var Hook = NewEvent()
 
 var route = &Route{}
 
@@ -53,18 +53,18 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
         req.ws = conn
         defer conn.Close()
-        Event.Trigger("ws_connect", req)
-        defer Event.Trigger("ws_close", req)
+        Hook.Trigger("ws_connect", req)
+        defer Hook.Trigger("ws_close", req)
         req.handleWSMessage()
         return
     }
 
     //normal request
-    Event.Trigger("request", req)
+    Hook.Trigger("request", req)
 
     var act Action
     act, req.params = route.Parse(r.URL.Path)
-    Event.Trigger("action", req)
+    Hook.Trigger("action", req)
 
     var resp *Response
     if act == nil {
@@ -73,7 +73,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         resp = ErrorAction(req, resp.code, resp.message)
     }
 
-    Event.Trigger("response", req, resp)
+    Hook.Trigger("response", req, resp)
     if resp.status == 301 || resp.status == 302 {
         http.Redirect(w, r, resp.message, resp.status)
     } else {
@@ -85,7 +85,9 @@ func listener() net.Listener {
     var err error
     var lsr net.Listener
     conf := Conf.Tree("server")
-    lsr, err = net.Listen("tcp", fmt.Sprintf("%v:%v", conf.String("host"), conf.Int64("port")))
+    host, _ := conf.String("host")
+    port, _ := conf.Int64("port")
+    lsr, err = net.Listen("tcp", fmt.Sprintf("%v:%v", host, port))
     if err != nil {
         panic(err.Error())
     }
@@ -106,6 +108,6 @@ func Run() {
     wg.Add(1)
     go serve()
     fmt.Println("work work")
-    Event.Trigger("run")
+    Hook.Trigger("run")
     wg.Wait()
 }

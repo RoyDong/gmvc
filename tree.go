@@ -24,6 +24,7 @@ func NewTree() *Tree {
 /*
 LoadYaml reads data from a yaml file,
 repl means whether to replace or keep the old value
+*/
 func (t *Tree) LoadYaml(file string, repl bool) error {
     var yml interface{}
     if err := LoadYaml(&yml, file); err != nil {
@@ -32,7 +33,6 @@ func (t *Tree) LoadYaml(file string, repl bool) error {
     t.loadValue(yml, repl)
     return nil
 }
-*/
 
 /*
 LoadJson read data from a json file,

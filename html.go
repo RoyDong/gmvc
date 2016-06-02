@@ -15,9 +15,13 @@ type html struct {
 func newHtml() *html {
     h := &html{dir: "templates/", ext: "html", layout: "layouts/main"}
     h.funcs = template.FuncMap{
-        "html":    Html,
+        "html":    h.html,
     }
     return h
+}
+
+func (h *html) html(str string) template.HTML {
+    return template.HTML(str)
 }
 
 func (h *html) templateFile(name string) string {
@@ -29,16 +33,16 @@ data
  */
 func (h *html) render(data interface{}, tpls ...string) []byte {
     var name, layout string
-    l := len(tpl)
+    l := len(tpls)
 
     if l == 0 {
         panic("gmvc: missing template name")
     } else if l == 1 {
-        name = tpl[0]
+        name = tpls[0]
         layout = h.layout
     } else {
-        name = tpl[0]
-        layout = tpl[1]
+        name = tpls[0]
+        layout = tpls[1]
     }
 
     tpl := template.New("/").Funcs(h.funcs)
