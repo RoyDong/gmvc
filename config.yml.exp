@@ -6,13 +6,16 @@ server:
     host: "0.0.0.0"
     port: 80
 
+
 template:
     dir: template
     ext: html
 
+
 static_file:
     prefix: static
     dir: static
+
 
 session:
     prefix: session/
@@ -24,6 +27,8 @@ session:
         port: 6379
         timeout: 3
 
+log:
+    dir: log
 
 redis:
     main:
