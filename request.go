@@ -118,7 +118,7 @@ type WSMessage struct {
 
 
 func (r *Request) newWSMessage(raw []byte) *WSMessage {
-    parts := bytes.Split(raw, bytes.TrimLeft(raw, "\n"))
+    parts := bytes.Split(bytes.Trim(raw, "\n"), []byte("\n"))
     wsm := &WSMessage{Name: string(parts[0]), Request: r, Bag: NewTree()}
     if len(parts[1]) > 0 {
         values, err := url.ParseQuery(string(parts[1]))
@@ -131,7 +131,7 @@ func (r *Request) newWSMessage(raw []byte) *WSMessage {
             }
         }
     }
-    if len(parts[2]) > 0 {
+    if len(parts) > 2 && len(parts[2]) > 0 {
         wsm.Data = parts[2]
     }
     return wsm
@@ -210,7 +210,7 @@ func (r *Request) handleWSMessage() {
         go func() {
             defer func() {
                 if err := recover(); err != nil {
-                    log.Println("gmvc: websocket ", err)
+                    log.Println(err)
                 }
             }()
             var wsm = r.newWSMessage(raw)
