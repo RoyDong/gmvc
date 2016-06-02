@@ -7,25 +7,25 @@ import (
 
 type Action func(r *Request) *Response
 
-type Route struct {
+type Router struct {
     name   string
     regexp *regexp.Regexp
     action Action
 
-    statics map[string]*Route
-    regexps []*Route
+    statics map[string]*Router
+    regexps []*Router
 }
 
-func (r *Route) Parse(path string) (Action, []string) {
+func (r *Router) Parse(path string) (Action, []string) {
     current := r
     params := make([]string, 0)
     nodes := strings.Split(strings.ToLower(strings.Trim(path, "/")), "/")
     for _, name := range nodes {
         var found bool
-        var route *Route
+        var router *Router
         if len(current.statics) > 0 {
-            if route, found = current.statics[name]; found {
-                current = route
+            if router, found = current.statics[name]; found {
+                current = router
             }
         }
         if !found {
@@ -46,7 +46,7 @@ func (r *Route) Parse(path string) (Action, []string) {
     return current.action, params
 }
 
-func (r *Route) Set(path string, action Action) {
+func (r *Router) Set(path string, action Action) {
     current := r
     nodes := strings.Split(strings.ToLower(strings.Trim(path, "/")), "/")
     for _, name := range nodes {
@@ -61,16 +61,16 @@ func (r *Route) Set(path string, action Action) {
             }
         }
         if !found {
-            rt = &Route{name: name}
+            rt = &Router{name: name}
             if strings.Contains(name, "(") {
                 rt.regexp = regexp.MustCompile("^" + name + "$")
                 if current.regexps == nil {
-                    current.regexps = make([]*Route, 0, 1)
+                    current.regexps = make([]*Router, 0, 1)
                 }
                 current.regexps = append(current.regexps, rt)
             } else {
                 if current.statics == nil {
-                    current.statics = make(map[string]*Route, 1)
+                    current.statics = make(map[string]*Router, 1)
                 }
                 current.statics[name] = rt
             }

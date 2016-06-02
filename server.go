@@ -22,11 +22,11 @@ events:
 */
 var Hook = NewEvent()
 
-var route = &Route{}
+var router = &Router{}
 
 func SetAction(action Action, patterns ...string) {
     for _, pattern := range patterns {
-        route.Set(pattern, action)
+        router.Set(pattern, action)
     }
 }
 
@@ -63,7 +63,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     Hook.Trigger("request", req)
 
     var act Action
-    act, req.params = route.Parse(r.URL.Path)
+    act, req.params = router.Parse(r.URL.Path)
     Hook.Trigger("action", req)
 
     var resp *Response

@@ -13,7 +13,7 @@ type html struct {
 }
 
 func newHtml() *html {
-    h := &html{dir: "templates/", ext: "html", layout: "layouts/main"}
+    h := &html{dir: "template", ext: "html", layout: "layout/main"}
     h.funcs = template.FuncMap{
         "html":    h.html,
     }
@@ -45,8 +45,7 @@ func (h *html) render(data interface{}, tpls ...string) []byte {
         layout = tpls[1]
     }
 
-    tpl := template.New("/").Funcs(h.funcs)
-    template.Must(tpl.Funcs(h.funcs).ParseFiles(h.templateFile(layout), h.templateFile(name)))
+    tpl := template.Must(template.ParseFiles(h.templateFile(layout), h.templateFile(name))).Funcs(h.funcs)
     buffer := &bytes.Buffer{}
     tpl.Execute(buffer, data)
     return buffer.Bytes()
