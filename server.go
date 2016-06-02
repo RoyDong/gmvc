@@ -59,19 +59,19 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    path := strings.Trim(r.URL.Path, "/")
+    path := r.URL.Path
 
     //static files
     var sdir, sprefix string
     var has bool
     sdir, has = Conf.String("static_file.dir")
     if has {
-        sdir = "static"
+        sdir = "static/"
     }
 
     sprefix, has = Conf.String("static_file.prefix")
     if !has {
-        sprefix = "static"
+        sprefix = "/static"
     }
 
     if strings.HasPrefix(path, sprefix) {

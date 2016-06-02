@@ -8,13 +8,13 @@ server:
 
 
 template:
-    dir: template
+    dir: template/
     ext: html
 
 
 static_file:
-    prefix: static
-    dir: static
+    prefix: /static
+    dir: static/
 
 
 session:

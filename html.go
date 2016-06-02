@@ -13,7 +13,7 @@ type html struct {
 }
 
 func newHtml() *html {
-    h := &html{dir: "template", ext: "html", layout: "layout/main"}
+    h := &html{dir: "template/", ext: "html", layout: "layout/main"}
     h.funcs = template.FuncMap{
         "html":    h.html,
     }
@@ -25,7 +25,7 @@ func (h *html) html(str string) template.HTML {
 }
 
 func (h *html) templateFile(name string) string {
-    return h.dir + "/" + name + "." + h.ext
+    return h.dir + name + "." + h.ext
 }
 
 /**
