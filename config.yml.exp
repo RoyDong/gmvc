@@ -7,13 +7,16 @@ server:
     port: 80
 
 template:
-    dir: templates/
+    dir: template
     ext: html
 
+static_file:
+    prefix: static
+    dir: static
 
 session:
     prefix: session/
-    domain: /
+    domain: ~
     keyname: gmvcsession
     expires: 30
     redis:

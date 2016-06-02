@@ -59,11 +59,33 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    path := strings.Trim(r.URL.Path, "/")
+
+    //static files
+    var sdir, sprefix string
+    var has bool
+    sdir, has = Conf.String("static_file.dir")
+    if has {
+        sdir = "static"
+    }
+
+    sprefix, has = Conf.String("static_file.prefix")
+    if !has {
+        sprefix = "static"
+    }
+
+    if strings.HasPrefix(path, sprefix) {
+        filename := Pwd + sdir + strings.TrimLeft(path, sprefix)
+        log.Println(filename)
+        http.ServeFile(w, r, filename)
+        return
+    }
+
     //normal request
     Hook.Trigger("request", req)
 
     var act Action
-    act, req.params = router.Parse(r.URL.Path)
+    act, req.params = router.Parse(path)
     Hook.Trigger("action", req)
 
     var resp *Response
