@@ -8,9 +8,10 @@ import (
 
 var (
     Pwd      string
-    Conf     = NewTree()
+    Conf     *Tree
     Env      = "prod"
 
+    tpl      *html
 )
 
 
@@ -25,6 +26,7 @@ func initConfig() {
         }
     }
 
+    Conf = NewTree()
     if err := Conf.LoadYaml(confile, false); err != nil {
         log.Fatal("gmvc: ", err)
     }
@@ -41,17 +43,12 @@ func initConfig() {
     }
 }
 
-
-var tpl *html
-
 func init() {
-
     Hook.Trigger("before_init")
 
     initConfig()
 
     tpl = newHtml()
-
 
     Hook.Trigger("after_init")
 }
