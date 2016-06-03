@@ -65,7 +65,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     var sdir, sprefix string
     var has bool
     sdir, has = Conf.String("static_file.dir")
-    if has {
+    if !has {
         sdir = "static/"
     }
 

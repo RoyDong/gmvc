@@ -12,8 +12,6 @@ import (
     "log"
 )
 
-var tpl = newHtml()
-
 
 func TemplateFuncs(funcs map[string]interface{}) {
     for k, f := range funcs {

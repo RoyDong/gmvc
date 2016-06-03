@@ -8,8 +8,9 @@ import (
 
 var (
     Pwd      string
-    Conf     *Tree
+    Conf     = NewTree()
     Env      = "prod"
+
 )
 
 
@@ -24,7 +25,6 @@ func initConfig() {
         }
     }
 
-    Conf = NewTree()
     if err := Conf.LoadYaml(confile, false); err != nil {
         log.Fatal("gmvc: ", err)
     }
@@ -39,22 +39,20 @@ func initConfig() {
     if env, ok := Conf.String("env"); ok {
         Env = env
     }
-
-    if v, ok := Conf.String("template.ext"); ok {
-        tpl.ext = v
-    }
-
-    if dir, ok := Conf.String("template.dir"); ok {
-        if dir[len(dir)-1] != '/' {
-            dir = dir + "/"
-        }
-        tpl.dir = dir
-    }
 }
 
-func Init() {
+
+var tpl *html
+
+func init() {
+
     Hook.Trigger("before_init")
+
     initConfig()
+
+    tpl = newHtml()
+
+
     Hook.Trigger("after_init")
 }
 

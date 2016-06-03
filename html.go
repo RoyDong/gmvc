@@ -13,10 +13,23 @@ type html struct {
 }
 
 func newHtml() *html {
-    h := &html{dir: "template/", ext: "html", layout: "layout/main"}
+    h := &html{layout: "layout/main"}
+
+    var has bool
+    h.ext, has = Conf.String("template.ext")
+    if !has {
+        h.ext = "html"
+    }
+
+    h.dir, has = Conf.String("template.dir")
+    if !has {
+        h.dir = "template/"
+    }
+
     h.funcs = template.FuncMap{
         "html":    h.html,
     }
+
     return h
 }
 

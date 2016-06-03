@@ -18,7 +18,7 @@ type Tree struct {
 }
 
 func NewTree() *Tree {
-    return &Tree{locker: &sync.RWMutex{}}
+    return &Tree{name: "", locker: &sync.RWMutex{}}
 }
 
 /*
@@ -89,6 +89,9 @@ func (t *Tree) find(key string) *Tree {
         strings.ToLower(strings.Trim(key, ".")), ".")
     for _, name := range nodes {
         var has bool
+        if current.branches == nil {
+            return nil
+        }
         if current, has = current.branches[name]; !has {
             return nil
         }
