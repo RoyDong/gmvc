@@ -130,7 +130,6 @@ func initSession(r *Request) {
                 delete(sessions, r.Session.key)
                 r.Session.Clear()
                 r.Session = nil
-                delete(sessions, key)
             }
         }
     }
