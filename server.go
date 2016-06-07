@@ -42,7 +42,7 @@ type handler struct {
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     req := newRequest(w, r)
-    initSession(req)
+    retrieveSession(req)
 
     //websocket
     if strings.ToLower(r.Header.Get("Upgrade")) == "websocket" {

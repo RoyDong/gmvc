@@ -50,6 +50,8 @@ func init() {
 
     tpl = newHtml()
 
+    initSession()
+
     Hook.Trigger("after_init")
 }
 

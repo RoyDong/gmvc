@@ -16,15 +16,15 @@ var (
     SessionExpires  = int64(1800)
     SessionKeyName  = "GMVCSESSION"
     SessionPrefix   = "session/"
+
+    sessions        = make(map[string]*Session)
+    sessionStorage  *redis.Client
 )
 
 type Session struct {
     key       string
     updated   time.Time
-    storage   *redis.Client
 }
-
-var sessions = make(map[string]*Session)
 
 func (s *Session) RedisKey() string {
     return SessionPrefix + s.key + "/";
@@ -35,7 +35,7 @@ func (s *Session) Key() string {
 }
 
 func (s *Session) Add(key string, v interface{}) bool {
-    resp := s.storage.Cmd("hadd", s.RedisKey(), v)
+    resp := sessionStorage.Cmd("hadd", s.RedisKey(), v)
     ret, err := resp.Int64()
     if err != nil {
         return false
@@ -44,7 +44,7 @@ func (s *Session) Add(key string, v interface{}) bool {
 }
 
 func (s *Session) Set(key string, v interface{}) bool {
-    resp := s.storage.Cmd("hset", s.RedisKey(), key, v)
+    resp := sessionStorage.Cmd("hset", s.RedisKey(), key, v)
     ret, err := resp.Int64()
     if err != nil {
         return false
@@ -53,18 +53,19 @@ func (s *Session) Set(key string, v interface{}) bool {
 }
 
 func (s *Session) Get(key string) *redis.Resp {
-    return s.storage.Cmd("hget", s.RedisKey(), key)
+    return sessionStorage.Cmd("hget", s.RedisKey(), key)
 }
 
 func (s *Session) Clear() {
-    s.storage.Cmd("del", s.RedisKey())
+    sessionStorage.Cmd("del", s.RedisKey())
 }
+
 
 /*
 InitSession find session by session id set to request
 if none found then create a new session
 */
-func initSession(r *Request) {
+func initSession() {
     conf := Conf.Tree("session")
     storage := conf.Tree("redis")
 
@@ -88,6 +89,14 @@ func initSession(r *Request) {
         SessionExpires = v
     }
 
+    var err error
+    sessionStorage, err = redis.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), time.Duration(timeout) * time.Second);
+    if err != nil {
+        panic(err.Error())
+    }
+}
+
+func retrieveSession(r *Request) {
     key := r.Header.Get(SessionKeyName)
 
     if len(key) == 0 {
@@ -96,32 +105,22 @@ func initSession(r *Request) {
         }
     }
 
-    client, err := redis.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), time.Duration(timeout) * time.Second);
-    if err != nil {
-        panic(err.Error())
-    }
-
     var s *Session
     var has bool
     if s, has = sessions[key]; !has {
         s = &Session{
             key:     key,
             updated: time.Now(),
-            storage: client,
         }
     }
 
     if len(s.key) == 0 {
         s.key = genSessionKey(r.RemoteAddr)
     } else {
-        sec, err := s.Get("__updated").Int64()
-        if err != nil {
-            panic(err.Error())
-        }
-
+        sec, _ := s.Get("__updated").Int64()
         now := time.Now().Unix()
-        if sec + SessionExpires < now {
-            s.Clear()
+        if int64(sec) + SessionExpires < now {
+            sessionStorage.Cmd("del", s.RedisKey())
             s.key = genSessionKey(r.RemoteAddr)
         }
     }
