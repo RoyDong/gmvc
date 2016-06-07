@@ -9,6 +9,7 @@ import (
     "net/http"
     "time"
     "github.com/mediocregopher/radix.v2/redis"
+    "log"
 )
 
 var (
@@ -110,7 +111,6 @@ func retrieveSession(r *Request) {
     if s, has = sessions[key]; !has {
         s = &Session{
             key:     key,
-            updated: time.Now(),
         }
     }
 
@@ -119,15 +119,18 @@ func retrieveSession(r *Request) {
     } else {
         sec, _ := s.Get("__updated").Int64()
         now := time.Now().Unix()
-        if int64(sec) + SessionExpires < now {
+        if sec + SessionExpires < now {
             sessionStorage.Cmd("del", s.RedisKey())
+            delete(sessions, s.key)
             s.key = genSessionKey(r.RemoteAddr)
         }
     }
 
+    s.updated = time.Now()
     s.Set("__updated", s.updated.Unix())
 
     sessions[s.key] = s
+    r.Session = s
 
     //set cookie
     http.SetCookie(r.rw, &http.Cookie{
@@ -137,8 +140,6 @@ func retrieveSession(r *Request) {
         Domain:   SessionDomain,
         HttpOnly: true,
     })
-
-    r.Session = s
 }
 
 func genSessionKey(salt string) string {
