@@ -26,55 +26,6 @@ type Session struct {
 
 var sessions = make(map[string]*Session)
 
-func newSession(r *Request) *Session {
-    conf := Conf.Tree("session")
-    storage := conf.Tree("redis")
-
-    ip, _ := storage.String("ip")
-    port, _ := storage.Int64("port")
-    timeout, _ := storage.Int("timeout")
-
-    client, err := redis.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), time.Duration(timeout) * time.Second);
-    if err != nil {
-        panic(err.Error())
-    }
-
-    s := &Session{
-        key:        genSessionKey(r.RemoteAddr),
-        updated:    time.Now(),
-        storage:    client,
-    }
-
-    if v, ok := conf.String("prefix"); ok {
-        SessionPrefix = v
-    }
-
-    if v, ok := conf.String("keyname"); ok {
-        SessionKeyName = v
-    }
-
-    if v, ok := conf.String("domain"); ok {
-        SessionDomain = v
-    }
-
-    if v, ok := conf.Int64("expires"); ok {
-        SessionExpires = v
-    }
-
-    sessions[s.key] = s
-
-    //set cookie
-    http.SetCookie(r.rw, &http.Cookie{
-        Name:     SessionKeyName,
-        Value:    s.key,
-        Path:     "/",
-        Domain:   SessionDomain,
-        HttpOnly: true,
-    })
-
-    return s
-}
-
 func (s *Session) RedisKey() string {
     return SessionPrefix + s.key + "/";
 }
@@ -93,7 +44,7 @@ func (s *Session) Add(key string, v interface{}) bool {
 }
 
 func (s *Session) Set(key string, v interface{}) bool {
-    resp := s.storage.Cmd("hset", s.RedisKey(), v)
+    resp := s.storage.Cmd("hset", s.RedisKey(), key, v)
     ret, err := resp.Int64()
     if err != nil {
         return false
@@ -102,7 +53,7 @@ func (s *Session) Set(key string, v interface{}) bool {
 }
 
 func (s *Session) Get(key string) *redis.Resp {
-    return s.storage.Cmd("hget", s.RedisKey())
+    return s.storage.Cmd("hget", s.RedisKey(), key)
 }
 
 func (s *Session) Clear() {
@@ -114,6 +65,29 @@ InitSession find session by session id set to request
 if none found then create a new session
 */
 func initSession(r *Request) {
+    conf := Conf.Tree("session")
+    storage := conf.Tree("redis")
+
+    ip, _ := storage.String("ip")
+    port, _ := storage.Int64("port")
+    timeout, _ := storage.Int("timeout")
+
+    if v, ok := conf.String("prefix"); ok {
+        SessionPrefix = v
+    }
+
+    if v, ok := conf.String("keyname"); ok {
+        SessionKeyName = v
+    }
+
+    if v, ok := conf.String("domain"); ok {
+        SessionDomain = v
+    }
+
+    if v, ok := conf.Int64("expires"); ok {
+        SessionExpires = v
+    }
+
     key := r.Header.Get(SessionKeyName)
 
     if len(key) == 0 {
@@ -122,21 +96,50 @@ func initSession(r *Request) {
         }
     }
 
-    if len(key) > 0 {
-        var has bool
-        if r.Session, has = sessions[key]; has {
-            sec := time.Now().Unix()
-            if has && r.Session.updated.Unix() + SessionExpires < sec {
-                delete(sessions, r.Session.key)
-                r.Session.Clear()
-                r.Session = nil
-            }
+    client, err := redis.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), time.Duration(timeout) * time.Second);
+    if err != nil {
+        panic(err.Error())
+    }
+
+    var s *Session
+    var has bool
+    if s, has = sessions[key]; !has {
+        s = &Session{
+            key:     key,
+            updated: time.Now(),
+            storage: client,
         }
     }
 
-    if r.Session == nil {
-        r.Session = newSession(r)
+    if len(s.key) == 0 {
+        s.key = genSessionKey(r.RemoteAddr)
+    } else {
+        sec, err := s.Get("__updated").Int64()
+        if err != nil {
+            panic(err.Error())
+        }
+
+        now := time.Now().Unix()
+        if sec + SessionExpires < now {
+            s.Clear()
+            s.key = genSessionKey(r.RemoteAddr)
+        }
     }
+
+    s.Set("__updated", s.updated.Unix())
+
+    sessions[s.key] = s
+
+    //set cookie
+    http.SetCookie(r.rw, &http.Cookie{
+        Name:     SessionKeyName,
+        Value:    s.key,
+        Path:     "/",
+        Domain:   SessionDomain,
+        HttpOnly: true,
+    })
+
+    r.Session = s
 }
 
 func genSessionKey(salt string) string {

@@ -76,7 +76,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
     if strings.HasPrefix(path, sprefix) {
         filename := Pwd + sdir + strings.TrimLeft(path, sprefix)
-        log.Println(filename)
         http.ServeFile(w, r, filename)
         return
     }
@@ -120,7 +119,7 @@ var wg = &sync.WaitGroup{}
 
 func serve() {
     defer wg.Done()
-    srv := &http.Server{Handler: &handler{ws.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024,}}}
+    srv := &http.Server{Handler: &handler{ws.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}}}
     lsr := listener()
     defer lsr.Close()
     log.Println(srv.Serve(lsr))
@@ -133,3 +132,4 @@ func Run() {
     Hook.Trigger("run")
     wg.Wait()
 }
+
