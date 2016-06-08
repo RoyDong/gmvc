@@ -9,7 +9,6 @@ import (
     "strings"
     "bytes"
     "fmt"
-    "log"
 )
 
 
@@ -119,7 +118,7 @@ func (r *Request) newWSMessage(raw []byte) *WSMessage {
     parts := bytes.Split(bytes.Trim(raw, "\n"), []byte("\n"))
     wsm := &WSMessage{Name: string(parts[0]), Request: r, Bag: NewTree()}
     if len(parts) < 2 {
-        log.Println("gmvc: bad websocket message format")
+        Logger.Println("gmvc: bad websocket message format")
     }
     if len(parts[1]) > 0 {
         values, err := url.ParseQuery(string(parts[1]))
@@ -146,7 +145,7 @@ func (r *Request) SendWSMessage(name string, query map[string]interface{}, data 
 
     json, err := json.Marshal(data)
     if err != nil {
-        log.Println(err.Error());
+        Logger.Println(err.Error());
     }
 
     r.ws.WriteMessage(ws.TextMessage, []byte(name + "\n" + strings.Join(q, "&") + "\n" + string(json) + "\n"))
@@ -158,7 +157,7 @@ func (wsm *WSMessage) Send(name string, query map[string]interface{}, data inter
 
 func (wsm *WSMessage) Decode(v interface{}) {
     if err := json.Unmarshal(wsm.Data, v); err != nil {
-        log.Println(err.Error())
+        Logger.Println(err.Error())
     }
 }
 
@@ -199,26 +198,30 @@ func (wsm *WSMessage) Float(k string) (float64, bool) {
 
 func (r *Request) handleWSMessage() {
     if r.ws == nil {
-        panic("gmvc: bad websocket connection")
+        Logger.Fatalln("gmvc: bad websocket connection")
     }
     for {
         var raw []byte
         var err error
         if _, raw, err = r.ws.ReadMessage(); err != nil {
-            log.Println(err)
+            Logger.Println(err)
             return
         }
+
         go func() {
             defer func() {
                 if err := recover(); err != nil {
-                    log.Println(err)
+                    Logger.Println(err)
                 }
             }()
             var wsm = r.newWSMessage(raw)
+
+            accesslog.Println("websocket: " + wsm.Name)
+
             if wsa, has := WSActionMap[wsm.Name]; has {
                 wsa(wsm)
             } else {
-                log.Println("gmvc: wsa " + wsm.Name + "not found")
+                Logger.Println("gmvc: wsa " + wsm.Name + "not found")
             }
         }()
     }
@@ -253,7 +256,7 @@ func (r *Request) JsonResponse(data interface{}) *Response {
     json, err := json.Marshal(data)
     if err != nil {
         //TODO 错误处理
-        log.Println(err.Error());
+        Logger.Println(err.Error());
     }
 
     p := r.newResponse()

@@ -3,7 +3,6 @@ package gmvc
 import (
     "regexp"
     "strings"
-    "log"
     "fmt"
 )
 
@@ -80,7 +79,7 @@ func (r *Router) Set(path string, action Action) {
         current = rt
     }
     if current.action != nil {
-        log.Println(fmt.Sprintf("gmvc: %s already had an action and it will be overwritten", path))
+        Logger.Println(fmt.Sprintf("gmvc: %s already had an action and it will be overwritten", path))
     }
     current.action = action
 }

@@ -1,7 +1,7 @@
 package gmvc
 
 import (
-    "crypto/md5"
+    "crypto/sha512"
     "crypto/rand"
     "encoding/hex"
     "fmt"
@@ -9,7 +9,6 @@ import (
     "net/http"
     "time"
     "github.com/mediocregopher/radix.v2/redis"
-    "log"
 )
 
 var (
@@ -68,11 +67,6 @@ if none found then create a new session
 */
 func initSession() {
     conf := Conf.Tree("session")
-    storage := conf.Tree("redis")
-
-    ip, _ := storage.String("ip")
-    port, _ := storage.Int64("port")
-    timeout, _ := storage.Int("timeout")
 
     if v, ok := conf.String("prefix"); ok {
         SessionPrefix = v
@@ -90,10 +84,15 @@ func initSession() {
         SessionExpires = v
     }
 
+    rconf := conf.Tree("redis")
+    ip, _ := rconf.String("ip")
+    port, _ := rconf.Int64("port")
+    timeout, _ := rconf.Int("timeout")
+
     var err error
     sessionStorage, err = redis.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), time.Duration(timeout) * time.Second);
     if err != nil {
-        panic(err.Error())
+        Logger.Fatalln(err.Error())
     }
 }
 
@@ -145,13 +144,13 @@ func retrieveSession(r *Request) {
 func genSessionKey(salt string) string {
     rnd := make([]byte, 24)
     if _, err := io.ReadFull(rand.Reader, rnd); err != nil {
-        panic(err.Error())
+        Logger.Fatalln(err.Error())
     }
 
     sig := fmt.Sprintf("%s%d%s", salt, time.Now().UnixNano(), rnd)
-    hash := md5.New()
+    hash := sha512.New()
     if _, err := hash.Write([]byte(sig)); err != nil {
-        panic(err.Error())
+        Logger.Fatalln(err.Error())
     }
 
     return hex.EncodeToString(hash.Sum(nil))

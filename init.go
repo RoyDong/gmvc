@@ -48,10 +48,14 @@ func init() {
 
     initConfig()
 
+    Logger = initLogger("error")
+    accesslog = initLogger("access")
+
     tpl = newHtml()
 
     initSession()
 
     Hook.Trigger("after_init")
 }
+
 

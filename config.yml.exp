@@ -28,9 +28,8 @@ session:
         timeout: 3
 
 log:
-    dir: log/
-    access: access.log
-    error: error.log
+    access: log/access.log
+    error: log/error.log
 
 
 redis:

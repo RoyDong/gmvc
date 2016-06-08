@@ -5,7 +5,6 @@ import (
     "fmt"
     "net"
     "net/http"
-    "log"
     "sync"
     "strings"
 )
@@ -44,11 +43,14 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     req := newRequest(w, r)
     retrieveSession(req)
 
+    path := r.URL.Path
+    accesslog.Println(path)
+
     //websocket
     if strings.ToLower(r.Header.Get("Upgrade")) == "websocket" {
         conn, err := h.Upgrade(w, r, nil)
         if err != nil {
-            panic(err.Error())
+            Logger.Fatalln(err.Error())
         }
 
         req.ws = conn
@@ -58,8 +60,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         req.handleWSMessage()
         return
     }
-
-    path := r.URL.Path
 
     //static files
     var sdir, sprefix string
@@ -110,7 +110,7 @@ func listener() net.Listener {
     port, _ := conf.Int64("port")
     lsr, err = net.Listen("tcp", fmt.Sprintf("%v:%v", host, port))
     if err != nil {
-        panic(err.Error())
+        Logger.Fatalln(err.Error())
     }
     return lsr
 }
@@ -122,7 +122,7 @@ func serve() {
     srv := &http.Server{Handler: &handler{ws.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}}}
     lsr := listener()
     defer lsr.Close()
-    log.Println(srv.Serve(lsr))
+    Logger.Println(srv.Serve(lsr))
 }
 
 func Run() {

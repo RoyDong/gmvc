@@ -49,7 +49,7 @@ func (h *html) render(data interface{}, tpls ...string) []byte {
     l := len(tpls)
 
     if l == 0 {
-        panic("gmvc: missing template name")
+        Logger.Fatalln("gmvc: missing template name")
     } else if l == 1 {
         name = tpls[0]
         layout = h.layout
