@@ -1,7 +1,7 @@
 package gmvc
 
 import (
-    "crypto/sha512"
+    "crypto/md5"
     "crypto/rand"
     "encoding/hex"
     "fmt"
@@ -9,6 +9,7 @@ import (
     "net/http"
     "time"
     "github.com/mediocregopher/radix.v2/redis"
+    "crypto/sha512"
 )
 
 var (
@@ -108,9 +109,7 @@ func retrieveSession(r *Request) {
     var s *Session
     var has bool
     if s, has = sessions[key]; !has {
-        s = &Session{
-            key:     key,
-        }
+        s = &Session{key: key}
     }
 
     if len(s.key) == 0 {
@@ -148,7 +147,7 @@ func genSessionKey(salt string) string {
     }
 
     sig := fmt.Sprintf("%s%d%s", salt, time.Now().UnixNano(), rnd)
-    hash := sha512.New()
+    hash := md5.New()
     if _, err := hash.Write([]byte(sig)); err != nil {
         Logger.Fatalln(err.Error())
     }
