@@ -11,13 +11,6 @@ import (
     "fmt"
 )
 
-
-func TemplateFuncs(funcs map[string]interface{}) {
-    for k, f := range funcs {
-        tpl.funcs[k] = f
-    }
-}
-
 /*
 consider it's the scope for an http request
 */

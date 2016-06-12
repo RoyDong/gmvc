@@ -115,7 +115,7 @@ func (t *Tree) find(key string) *Tree {
 }
 
 /*
-Get returns value find by key, key is a path divided by "." dot
+Get returns value find by key, key is a path divided by "." dot notation
 */
 func (t *Tree) Get(key string) interface{} {
     tree := t.find(key)

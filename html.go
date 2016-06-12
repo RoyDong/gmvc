@@ -15,19 +15,20 @@ type html struct {
 func newHtml() *html {
     h := &html{layout: "layout/main"}
 
+    conf := Store.Tree("config.template")
     var has bool
-    h.ext, has = Store.String("config.template.ext")
+    h.ext, has = conf.String("ext")
     if !has {
         h.ext = "html"
     }
 
-    h.dir, has = Store.String("config.template.dir")
+    h.dir, has = conf.String("dir")
     if !has {
         h.dir = "template/"
     }
 
     h.funcs = template.FuncMap{
-        "html":    h.html,
+        "html": h.html,
     }
 
     return h
@@ -63,4 +64,12 @@ func (h *html) render(data interface{}, tpls ...string) []byte {
     tpl.Execute(buffer, data)
     return buffer.Bytes()
 }
+
+
+func TemplateFuncs(funcs map[string]interface{}) {
+    for k, f := range funcs {
+        tpl.funcs[k] = f
+    }
+}
+
 
