@@ -15,7 +15,7 @@ var (
 
 
 func initLogger(name string) *log.Logger {
-    conf := Conf.Tree("log")
+    conf := Store.Tree("config.log")
 
     file, has := conf.String(name)
     if !has {

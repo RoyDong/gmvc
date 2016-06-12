@@ -64,12 +64,12 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     //static files
     var sdir, sprefix string
     var has bool
-    sdir, has = Conf.String("static_file.dir")
+    sdir, has = Store.String("config.static_file.dir")
     if !has {
         sdir = "static/"
     }
 
-    sprefix, has = Conf.String("static_file.prefix")
+    sprefix, has = Store.String("config.static_file.prefix")
     if !has {
         sprefix = "/static"
     }
@@ -105,7 +105,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func listener() net.Listener {
     var err error
     var lsr net.Listener
-    conf := Conf.Tree("server")
+    conf := Store.Tree("config.server")
     host, _ := conf.String("host")
     port, _ := conf.Int64("port")
     lsr, err = net.Listen("tcp", fmt.Sprintf("%v:%v", host, port))

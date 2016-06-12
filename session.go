@@ -9,7 +9,6 @@ import (
     "net/http"
     "time"
     "github.com/mediocregopher/radix.v2/redis"
-    "crypto/sha512"
 )
 
 var (
@@ -19,7 +18,7 @@ var (
     SessionPrefix   = "session/"
 
     sessions        = make(map[string]*Session)
-    sessionStorage  *redis.Client
+    sessionStore    *redis.Client
 )
 
 type Session struct {
@@ -36,7 +35,7 @@ func (s *Session) Key() string {
 }
 
 func (s *Session) Add(key string, v interface{}) bool {
-    resp := sessionStorage.Cmd("hadd", s.RedisKey(), v)
+    resp := sessionStore.Cmd("hadd", s.RedisKey(), v)
     ret, err := resp.Int64()
     if err != nil {
         return false
@@ -45,7 +44,7 @@ func (s *Session) Add(key string, v interface{}) bool {
 }
 
 func (s *Session) Set(key string, v interface{}) bool {
-    resp := sessionStorage.Cmd("hset", s.RedisKey(), key, v)
+    resp := sessionStore.Cmd("hset", s.RedisKey(), key, v)
     ret, err := resp.Int64()
     if err != nil {
         return false
@@ -54,11 +53,11 @@ func (s *Session) Set(key string, v interface{}) bool {
 }
 
 func (s *Session) Get(key string) *redis.Resp {
-    return sessionStorage.Cmd("hget", s.RedisKey(), key)
+    return sessionStore.Cmd("hget", s.RedisKey(), key)
 }
 
 func (s *Session) Clear() {
-    sessionStorage.Cmd("del", s.RedisKey())
+    sessionStore.Cmd("del", s.RedisKey())
 }
 
 
@@ -67,7 +66,7 @@ InitSession find session by session id set to request
 if none found then create a new session
 */
 func initSession() {
-    conf := Conf.Tree("session")
+    conf := Store.Tree("config.session")
 
     if v, ok := conf.String("prefix"); ok {
         SessionPrefix = v
@@ -91,7 +90,7 @@ func initSession() {
     timeout, _ := rconf.Int("timeout")
 
     var err error
-    sessionStorage, err = redis.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), time.Duration(timeout) * time.Second);
+    sessionStore, err = redis.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), time.Duration(timeout) * time.Second);
     if err != nil {
         Logger.Fatalln(err.Error())
     }
@@ -118,7 +117,7 @@ func retrieveSession(r *Request) {
         sec, _ := s.Get("__updated").Int64()
         now := time.Now().Unix()
         if sec + SessionExpires < now {
-            sessionStorage.Cmd("del", s.RedisKey())
+            sessionStore.Cmd("del", s.RedisKey())
             delete(sessions, s.key)
             s.key = genSessionKey(r.RemoteAddr)
         }

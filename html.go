@@ -16,12 +16,12 @@ func newHtml() *html {
     h := &html{layout: "layout/main"}
 
     var has bool
-    h.ext, has = Conf.String("template.ext")
+    h.ext, has = Store.String("config.template.ext")
     if !has {
         h.ext = "html"
     }
 
-    h.dir, has = Conf.String("template.dir")
+    h.dir, has = Store.String("config.template.dir")
     if !has {
         h.dir = "template/"
     }

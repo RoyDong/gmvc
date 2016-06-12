@@ -25,12 +25,13 @@ func NewTree() *Tree {
 LoadYaml reads data from a yaml file,
 repl means whether to replace or keep the old value
 */
-func (t *Tree) LoadYaml(file string, repl bool) error {
+func (t *Tree) LoadYaml(key, file string, repl bool) error {
     var yml interface{}
     if err := LoadYaml(&yml, file); err != nil {
         return err
     }
-    t.loadValue(yml, repl)
+    tree := t.prepare(key)
+    tree.loadValue(yml, repl)
     return nil
 }
 
@@ -38,14 +39,28 @@ func (t *Tree) LoadYaml(file string, repl bool) error {
 LoadJson read data from a json file,
 repl means whether to replace or keep the old value
 */
-func (t *Tree) LoadJson(file string, repl bool) error {
+func (t *Tree) LoadJson(key, file string, repl bool) error {
     var json interface{}
     if err := LoadJson(&json, file); err != nil {
         return err
     }
-    t.loadValue(json, repl)
+    tree := t.prepare(key)
+    tree.loadValue(json, repl)
     return nil
 }
+
+func (t *Tree) LoadTree(key string, data *Tree) {
+    tree := t.prepare(key)
+    tree.branches = data.branches
+    if tree.branches == nil {
+        tree.branches = data.branches
+    } else {
+        for k, v := range data.branches {
+            tree.branches[k] = v
+        }
+    }
+}
+
 
 func (t *Tree) loadValue(val interface{}, repl bool) {
     if v, ok := val.(map[interface{}]interface{}); ok {

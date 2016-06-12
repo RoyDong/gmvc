@@ -1,21 +1,20 @@
 package gmvc
 
 import (
-    "log"
     "os"
     "strings"
 )
 
 var (
     Pwd      string
-    Conf     *Tree
+    Store    *Tree
     Env      = "prod"
 
     tpl      *html
 )
 
 
-func initConfig() {
+func initStore() {
     confile := "config.yml"
     for i, arg := range os.Args {
         if arg == "-c" && i+1 < len(os.Args) {
@@ -26,19 +25,19 @@ func initConfig() {
         }
     }
 
-    Conf = NewTree()
-    if err := Conf.LoadYaml(confile, false); err != nil {
-        log.Fatal("gmvc: ", err)
+    Store = NewTree()
+    if err := Store.LoadYaml("config", confile, false); err != nil {
+        panic(err)
     }
 
-    if v, ok := Conf.String("pwd"); ok {
+    if v, ok := Store.String("config.pwd"); ok {
         Pwd = v
     }
     if Pwd != "" {
         os.Chdir(Pwd)
     }
 
-    if env, ok := Conf.String("env"); ok {
+    if env, ok := Store.String("config.env"); ok {
         Env = env
     }
 }
@@ -46,7 +45,7 @@ func initConfig() {
 func init() {
     Hook.Trigger("before_init")
 
-    initConfig()
+    initStore()
 
     Logger = initLogger("error")
     accesslog = initLogger("access")
