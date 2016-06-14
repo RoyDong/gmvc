@@ -2,7 +2,6 @@ package gmvc
 
 import (
     "os"
-    "strings"
 )
 
 var (
@@ -19,21 +18,16 @@ func initStore() {
     for i, arg := range os.Args {
         if arg == "-c" && i+1 < len(os.Args) {
             confile = os.Args[i+1]
-            if i := strings.LastIndex(confile, "/"); i >= 0 {
-                Pwd = confile[:i+1]
-            }
         }
     }
 
     Store = NewTree()
     if err := Store.LoadYaml("config", confile, false); err != nil {
-        panic(err)
+        panic("gmvc: config file is missing")
     }
 
     if v, ok := Store.String("config.pwd"); ok {
         Pwd = v
-    }
-    if Pwd != "" {
         os.Chdir(Pwd)
     }
 
@@ -48,7 +42,14 @@ func init() {
     initStore()
 
     Logger = initLogger("error")
+    if Logger == nil {
+        panic("gmvc: init logger error")
+    }
+
     accesslog = initLogger("access")
+    if accesslog == nil {
+        panic("gmvc: init logger error")
+    }
 
     tpl = newHtml()
 

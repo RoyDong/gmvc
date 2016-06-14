@@ -92,7 +92,7 @@ func initSession() {
     var err error
     sessionStore, err = redis.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), time.Duration(timeout) * time.Second);
     if err != nil {
-        Logger.Fatalln(err.Error())
+        Logger.Fatalln("gmvc: can not connect to session store redis")
     }
 }
 
