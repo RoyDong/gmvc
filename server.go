@@ -112,6 +112,7 @@ func listener() net.Listener {
     if err != nil {
         Logger.Fatalln(err.Error())
     }
+    Logger.Println(fmt.Sprintf("listening %v:%v", host, port))
     return lsr
 }
 
@@ -128,7 +129,6 @@ func serve() {
 func Run() {
     wg.Add(1)
     go serve()
-    fmt.Println("work work")
     Hook.Trigger("run")
     wg.Wait()
 }

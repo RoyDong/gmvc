@@ -64,9 +64,9 @@ func init() {
 
     initStore()
 
-    Logger = initLogger("error")
+    Logger = initLogger("info")
     if Logger == nil {
-        panic("gmvc: init logger error")
+        panic("gmvc: init logger info")
     }
 
     accesslog = initLogger("access")
