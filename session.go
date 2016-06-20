@@ -12,7 +12,7 @@ var (
     SessionExpires  = int64(1800)
     SessionKeyName  = "GMVCSESSION"
     SessionPrefix   = "session/"
-    SessionEnabled  = true
+    SessionEnabled  = false
 
 
     sessions        = make(map[string]*Session)
