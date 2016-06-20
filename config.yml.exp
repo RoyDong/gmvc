@@ -18,6 +18,7 @@ static_file:
 
 
 session:
+    enabled: 1
     prefix: session/
     domain: ~
     keyname: gmvcsession

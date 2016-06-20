@@ -3,30 +3,14 @@ package gmvc
 import (
     "bytes"
     "encoding/json"
-    "math/rand"
+    "crypto/rand"
     "os"
     "regexp"
     yaml "gopkg.in/yaml.v2"
+    "crypto/md5"
+    "io"
+    "encoding/hex"
 )
-
-const (
-    Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-)
-
-/*
-RandString creates a random string has length letters
-letters are all from Chars
-*/
-func RandString(length int) string {
-    rnd := make([]byte, 0, length)
-    max := len(Chars) - 1
-
-    for i := 0; i < length; i++ {
-        rnd = append(rnd, Chars[rand.Intn(max)])
-    }
-
-    return string(rnd)
-}
 
 /*
 LoadJson reads data from a json format file to v
@@ -80,5 +64,27 @@ func LoadFile(filename string) ([]byte, error) {
     text := make([]byte, fileInfo.Size())
     file.Read(text)
     return text, nil
+}
+
+func MD5(txt string) string {
+    hash := md5.New()
+    if _, err := io.WriteString(hash, txt); err != nil {
+        Logger.Fatalln(err.Error())
+    }
+    return hex.EncodeToString(hash.Sum(nil))
+}
+
+
+/*
+RandString creates a random string has length letters
+letters are all from Chars
+*/
+func RandString(n int) string {
+    rnd := make([]byte, n)
+    if _, err := io.ReadFull(rand.Reader, rnd); err != nil {
+        Logger.Fatalln(err.Error())
+    }
+
+    return string(rnd)
 }
 

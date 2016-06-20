@@ -210,6 +210,14 @@ func (t *Tree) Float64(key string) (float64, bool) {
     return 0, false
 }
 
+func (t *Tree) Bool(key string) (bool, bool) {
+    if v := t.Get(key); v != nil {
+        s, ok := v.(bool)
+        return s, ok
+    }
+    return false, false
+}
+
 func (t *Tree) String(key string) (string, bool) {
     if v := t.Get(key); v != nil {
         s, ok := v.(string)

@@ -1,14 +1,10 @@
 package gmvc
 
 import (
-    "crypto/md5"
-    "crypto/rand"
-    "encoding/hex"
-    "fmt"
-    "io"
     "net/http"
     "time"
     "github.com/mediocregopher/radix.v2/redis"
+    "fmt"
 )
 
 var (
@@ -16,6 +12,8 @@ var (
     SessionExpires  = int64(1800)
     SessionKeyName  = "GMVCSESSION"
     SessionPrefix   = "session/"
+    SessionEnabled  = true
+
 
     sessions        = make(map[string]*Session)
     sessionStore    *redis.Client
@@ -68,6 +66,18 @@ if none found then create a new session
 func initSession() {
     conf := Store.Tree("config.session")
 
+    if v, ok := conf.Int("enabled"); ok {
+        if v > 0 {
+            SessionEnabled = true
+        } else {
+            SessionEnabled = false
+        }
+    }
+
+    if !SessionEnabled {
+        return
+    }
+
     if v, ok := conf.String("prefix"); ok {
         SessionPrefix = v
     }
@@ -97,6 +107,10 @@ func initSession() {
 }
 
 func retrieveSession(r *Request) {
+    if !SessionEnabled {
+        return
+    }
+
     key := r.Header.Get(SessionKeyName)
 
     if len(key) == 0 {
@@ -140,17 +154,6 @@ func retrieveSession(r *Request) {
 }
 
 func genSessionKey(salt string) string {
-    rnd := make([]byte, 24)
-    if _, err := io.ReadFull(rand.Reader, rnd); err != nil {
-        Logger.Fatalln(err.Error())
-    }
-
-    sig := fmt.Sprintf("%s%d%s", salt, time.Now().UnixNano(), rnd)
-    hash := md5.New()
-    if _, err := hash.Write([]byte(sig)); err != nil {
-        Logger.Fatalln(err.Error())
-    }
-
-    return hex.EncodeToString(hash.Sum(nil))
+    return MD5(fmt.Sprintf("%s%d%s", salt, time.Now().UnixNano(), RandString(24)))
 }
 
