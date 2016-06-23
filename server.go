@@ -37,6 +37,8 @@ var ErrorAction = func(r *Request, c int, m string) *Response {
 
 type handler struct {
     ws.Upgrader
+    sdir string
+    sprefix string
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -62,20 +64,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
 
     //static files
-    var sdir, sprefix string
-    var has bool
-    sdir, has = Store.String("config.static_file.dir")
-    if !has {
-        sdir = "static/"
-    }
-
-    sprefix, has = Store.String("config.static_file.prefix")
-    if !has {
-        sprefix = "/static"
-    }
-
-    if strings.HasPrefix(path, sprefix) {
-        filename := Pwd + sdir + strings.TrimLeft(path, sprefix)
+    if strings.HasPrefix(path, h.sprefix) {
+        filename := Pwd + h.sdir + strings.TrimLeft(path, h.sprefix)
         http.ServeFile(w, r, filename)
         return
     }
@@ -120,9 +110,26 @@ var wg = &sync.WaitGroup{}
 
 func serve() {
     defer wg.Done()
-    srv := &http.Server{Handler: &handler{ws.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024}}}
+
+    h := &handler{
+        Upgrader: ws.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
+        sdir: "static/",
+        sprefix: "/static",
+    }
+
+    if v, has := Store.String("config.static_file.dir"); has {
+        h.sdir = v
+    }
+
+    if v, has := Store.String("config.static_file.prefix"); has {
+        h.sprefix = v
+    }
+
+    srv := &http.Server{Handler: h}
+
     lsr := listener()
     defer lsr.Close()
+
     Logger.Println(srv.Serve(lsr))
 }
 
