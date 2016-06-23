@@ -18,7 +18,7 @@ type Request struct {
     *http.Request
     Session *Session
     Cookies []*http.Cookie
-    Bag     *Tree
+    Store   *Tree
     params  []string
     ws      *ws.Conn
     rw      http.ResponseWriter
@@ -28,7 +28,7 @@ func newRequest(w http.ResponseWriter, r *http.Request) *Request {
     return &Request{
         Request: r,
         Cookies: r.Cookies(),
-        Bag: NewTree(),
+        Store: NewTree(),
         rw: w,
     }
 }
@@ -103,13 +103,13 @@ type WSMessage struct {
     Query   map[string]string
     Data    []byte
     Request *Request
-    Bag     *Tree
+    Store   *Tree
 }
 
 
 func (r *Request) newWSMessage(raw []byte) *WSMessage {
     parts := bytes.Split(bytes.Trim(raw, "\n"), []byte("\n"))
-    wsm := &WSMessage{Name: string(parts[0]), Request: r, Bag: NewTree()}
+    wsm := &WSMessage{Name: string(parts[0]), Request: r, Store: NewTree()}
     if len(parts) < 2 {
         Logger.Println("gmvc: bad websocket message format")
     }

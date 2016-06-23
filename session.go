@@ -13,6 +13,7 @@ var (
     SessionKeyName  = "GMVCSESSION"
     SessionPrefix   = "session/"
     SessionEnabled  = false
+    SessionRedis    = "main"
 
 
     sessions        = make(map[string]*Session)
@@ -94,16 +95,11 @@ func initSession() {
         SessionExpires = v
     }
 
-    rconf := conf.Tree("redis")
-    ip, _ := rconf.String("ip")
-    port, _ := rconf.Int64("port")
-    timeout, _ := rconf.Int("timeout")
-
-    var err error
-    sessionStore, err = redis.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), time.Duration(timeout) * time.Second);
-    if err != nil {
-        Logger.Fatalln("gmvc: can not connect to session store redis")
+    if v ,ok := conf.String("redis"); ok {
+        SessionRedis = v
     }
+
+    sessionStore = RedisClient(SessionRedis)
 }
 
 func retrieveSession(r *Request) {

@@ -177,6 +177,11 @@ func (t *Tree) Branches() map[string]*Tree {
     return t.branches
 }
 
+func (t *Tree) NodeNum(key string) int {
+    tree := t.find(key)
+    return len(tree.branches)
+}
+
 func (t *Tree) Clear() {
     t.branches = nil
     t.value = nil

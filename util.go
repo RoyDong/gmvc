@@ -1,6 +1,8 @@
 package gmvc
 
-import "math"
+import (
+    "math"
+)
 
 func Round(f float64, n int) float64 {
     base := math.Pow10(n)
@@ -15,3 +17,4 @@ func Round(f float64, n int) float64 {
 
     return f
 }
+
