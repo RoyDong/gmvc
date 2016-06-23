@@ -92,24 +92,21 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
 }
 
-func listener() net.Listener {
-    var err error
-    var lsr net.Listener
-    conf := Store.Tree("config.server")
-    host, _ := conf.String("host")
-    port, _ := conf.Int64("port")
-    lsr, err = net.Listen("tcp", fmt.Sprintf("%v:%v", host, port))
-    if err != nil {
-        Logger.Fatalln(err.Error())
-    }
-    Logger.Println(fmt.Sprintf("listening %v:%v", host, port))
-    return lsr
-}
-
 var wg = &sync.WaitGroup{}
 
 func serve() {
     defer wg.Done()
+
+    conf := Store.Tree("config.server")
+    host, _ := conf.String("host")
+    port, _ := conf.Int64("port")
+    lsr, err := net.Listen("tcp", fmt.Sprintf("%v:%v", host, port))
+    defer lsr.Close()
+    if err != nil {
+        Logger.Fatalln(err.Error())
+    }
+
+    Logger.Println(fmt.Sprintf("listening %v:%v", host, port))
 
     h := &handler{
         Upgrader: ws.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
@@ -126,10 +123,6 @@ func serve() {
     }
 
     srv := &http.Server{Handler: h}
-
-    lsr := listener()
-    defer lsr.Close()
-
     Logger.Println(srv.Serve(lsr))
 }
 
