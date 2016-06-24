@@ -6,7 +6,7 @@ import (
     "crypto/rand"
     "os"
     "regexp"
-    yaml "gopkg.in/yaml.v2"
+    "gopkg.in/yaml.v2"
     "crypto/md5"
     "io"
     "encoding/hex"
@@ -15,7 +15,7 @@ import (
 /*
 LoadJson reads data from a json format file to v
 */
-func LoadJson(v interface{}, filename string) error {
+func LoadJsonFile(v interface{}, filename string) error {
     text, err := LoadFile(filename)
     if err != nil {
         return err
@@ -36,7 +36,7 @@ func LoadJson(v interface{}, filename string) error {
 /**
 LoadYaml reads data from a yaml format file to v
 */
-func LoadYaml(v interface{}, filename string) error {
+func LoadYamlFile(v interface{}, filename string) error {
     text, err := LoadFile(filename)
     if err != nil {
         return err

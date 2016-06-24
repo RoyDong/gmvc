@@ -4,6 +4,8 @@ import (
     "strings"
     "fmt"
     "sync"
+    "encoding/json"
+    "gopkg.in/yaml.v2"
 )
 
 /*
@@ -25,13 +27,12 @@ func NewTree() *Tree {
 LoadYaml reads data from a yaml file,
 repl means whether to replace or keep the old value
 */
-func (t *Tree) LoadYaml(key, file string, repl bool) error {
+func (t *Tree) LoadYamlFile(key, file string, repl bool) error {
     var yml interface{}
-    if err := LoadYaml(&yml, file); err != nil {
+    if err := LoadYamlFile(&yml, file); err != nil {
         return err
     }
-    tree := t.prepare(key)
-    tree.loadValue(yml, repl)
+    t.LoadData(key, yml, repl)
     return nil
 }
 
@@ -39,14 +40,40 @@ func (t *Tree) LoadYaml(key, file string, repl bool) error {
 LoadJson read data from a json file,
 repl means whether to replace or keep the old value
 */
-func (t *Tree) LoadJson(key, file string, repl bool) error {
+func (t *Tree) LoadJsonFile(key, file string, repl bool) error {
     var json interface{}
-    if err := LoadJson(&json, file); err != nil {
+    if err := LoadJsonFile(&json, file); err != nil {
         return err
     }
-    tree := t.prepare(key)
-    tree.loadValue(json, repl)
+    t.LoadData(key, json, repl)
     return nil
+}
+
+func (t *Tree) LoadJson(key string, stream []byte, repl bool) error {
+    var data interface{}
+    if err := json.Unmarshal(stream, &data); err != nil {
+        return err
+    }
+    t.LoadData(key, data, repl)
+    return nil
+}
+
+func (t *Tree) LoadYaml(key string, stream []byte, repl bool) error {
+    var data interface{}
+    if err := yaml.Unmarshal(stream, &data); err != nil {
+        return err
+    }
+    t.LoadData(key, data, repl)
+    return nil
+}
+
+/*
+LoadJson read data from a json file,
+repl means whether to replace or keep the old value
+*/
+func (t *Tree) LoadData(key string, data interface{}, repl bool) {
+    tree := t.prepare(key)
+    tree.loadValue(data, repl)
 }
 
 func (t *Tree) LoadTree(key string, data *Tree) {
@@ -63,18 +90,23 @@ func (t *Tree) LoadTree(key string, data *Tree) {
 
 
 func (t *Tree) loadValue(val interface{}, repl bool) {
-    if v, ok := val.(map[interface{}]interface{}); ok {
-        t.loadBranches(v, nil, repl)
+    if v, ok := val.(map[string]interface{}); ok {
+        t.loadBranches(v, nil, nil, repl)
     } else if v, ok := val.([]interface{}); ok {
-        t.loadBranches(nil, v, repl)
+        t.loadBranches(nil, nil, v, repl)
+    } else if v, ok := val.(map[interface{}]interface{}); ok {
+        t.loadBranches(nil, v, nil, repl)
     } else if repl || t.value == nil {
         t.value = val
     }
 }
 
-func (t *Tree) loadBranches(m map[interface{}]interface{}, arr []interface{}, repl bool) {
+func (t *Tree) loadBranches(sm map[string]interface{}, m map[interface{}]interface{}, arr []interface{}, repl bool) {
     if t.branches == nil {
         t.branches = make(map[string]*Tree)
+    }
+    for k, v := range sm {
+        t.loadBranch(k, v, repl)
     }
     for k, v := range m {
         t.loadBranch(fmt.Sprintf("%v", k), v, repl)

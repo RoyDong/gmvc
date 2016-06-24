@@ -38,7 +38,7 @@ func initStore() {
     for _, info := range dinfo {
         if !info.IsDir() && strings.HasSuffix(info.Name(), ".yml") {
             key := strings.TrimRight(info.Name(), ".yml")
-            Store.LoadYaml(key, fd.Name() + "/" + info.Name(), false)
+            Store.LoadYamlFile(key, fd.Name() + "/" + info.Name(), false)
             if key == "config" {
                 hasConfig = true
             }
