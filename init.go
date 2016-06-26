@@ -38,7 +38,7 @@ func initStore() {
     for _, info := range dinfo {
         if !info.IsDir() && strings.HasSuffix(info.Name(), ".yml") {
             key := strings.TrimRight(info.Name(), ".yml")
-            Store.LoadYamlFile(key, fd.Name() + "/" + info.Name(), false)
+            Store.LoadYamlFile(key, fd.Name() + string(os.PathSeparator) + info.Name(), false)
             if key == "config" {
                 hasConfig = true
             }
@@ -52,15 +52,19 @@ func initStore() {
     if v, ok := Store.String("config.pwd"); ok {
         Pwd = v
         os.Chdir(Pwd)
+    } else {
+        Pwd, _ = os.Getwd()
     }
 
     if env, ok := Store.String("config.env"); ok {
         Env = env
     }
+
 }
 
 func init() {
     Hook.Trigger("before_init")
+
 
     initStore()
 

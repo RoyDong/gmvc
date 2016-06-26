@@ -7,6 +7,7 @@ import (
     "net/http"
     "sync"
     "strings"
+    "os"
 )
 
 /*
@@ -110,7 +111,7 @@ func serve() {
 
     h := &handler{
         Upgrader: ws.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024},
-        sdir: "static/",
+        sdir: fmt.Sprintf("static%v", os.PathSeparator),
         sprefix: "/static",
     }
 

@@ -16,7 +16,7 @@ func initLogger(name string) *log.Logger {
 
     file, has := conf.String(name)
     if !has {
-        file = "log/" + name + ".log"
+        file = "log" + string(os.PathSeparator) + name + ".log"
     }
 
     out, err := createLogfile(file)
@@ -31,6 +31,7 @@ func createLogfile(filename string) (*os.File, error) {
     var e error
     f, e = os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.FileMode(0644))
     if e != nil {
+        panic(e)
         return nil, e
     }
     return f, nil

@@ -3,6 +3,8 @@ package gmvc
 import (
     "html/template"
     "bytes"
+    "fmt"
+    "os"
 )
 
 type html struct {
@@ -13,7 +15,7 @@ type html struct {
 }
 
 func newHtml() *html {
-    h := &html{layout: "layout/main"}
+    h := &html{layout: fmt.Sprintf("layout%vmain", os.PathSeparator)}
 
     conf := Store.Tree("config.template")
     var has bool
@@ -24,7 +26,7 @@ func newHtml() *html {
 
     h.dir, has = conf.String("dir")
     if !has {
-        h.dir = "template/"
+        h.dir = fmt.Sprintf("template%v", os.PathSeparator)
     }
 
     h.funcs = template.FuncMap{
