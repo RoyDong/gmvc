@@ -90,26 +90,34 @@ func (t *Tree) LoadTree(key string, data *Tree) {
 
 
 func (t *Tree) loadValue(val interface{}, repl bool) {
-    if v, ok := val.(map[string]interface{}); ok {
+    switch v := val.(type) {
+    case map[interface{}]interface{}:
         t.loadBranches(v, nil, nil, repl)
-    } else if v, ok := val.([]interface{}); ok {
-        t.loadBranches(nil, nil, v, repl)
-    } else if v, ok := val.(map[interface{}]interface{}); ok {
+
+    case map[string]interface{}:
         t.loadBranches(nil, v, nil, repl)
-    } else if repl || t.value == nil {
+
+    case []interface{}:
+        t.loadBranches(nil, nil, v, repl)
+
+    case []string, []float64, []int64:
+
+    }
+
+    if repl || t.value == nil {
         t.value = val
     }
 }
 
-func (t *Tree) loadBranches(sm map[string]interface{}, m map[interface{}]interface{}, arr []interface{}, repl bool) {
+func (t *Tree) loadBranches(m map[interface{}]interface{}, ms map[string]interface{}, arr []interface{}, repl bool) {
     if t.branches == nil {
         t.branches = make(map[string]*Tree)
     }
-    for k, v := range sm {
-        t.loadBranch(k, v, repl)
-    }
     for k, v := range m {
         t.loadBranch(fmt.Sprintf("%v", k), v, repl)
+    }
+    for k, v := range ms {
+        t.loadBranch(k, v, repl)
     }
     for k, v := range arr {
         t.loadBranch(fmt.Sprintf("%d", k), v, repl)
@@ -262,3 +270,21 @@ func (t *Tree) String(key string) (string, bool) {
     }
     return "", false
 }
+
+func (t *Tree) Strings(key string) ([]string, bool) {
+    if v := t.Get(key); v != nil {
+        s, ok := v.([]string)
+        return s, ok
+    }
+    return nil, false
+}
+
+func (t *Tree) Floats(key string) ([]float64, bool) {
+    if v := t.Get(key); v != nil {
+        s, ok := v.([]float64)
+        return s, ok
+    }
+    return nil, false
+}
+
+
