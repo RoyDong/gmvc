@@ -67,7 +67,7 @@ if none found then create a new session
 func initSession() {
     conf := Store.Tree("config.session")
 
-    if v, ok := conf.Int("enabled"); ok {
+    if v, ok := conf.Int64("enabled"); ok {
         if v > 0 {
             SessionEnabled = true
         } else {

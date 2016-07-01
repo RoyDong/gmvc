@@ -6,6 +6,7 @@ import (
     "sync"
     "encoding/json"
     "gopkg.in/yaml.v2"
+    "strconv"
 )
 
 /*
@@ -227,21 +228,19 @@ func (t *Tree) Clear() {
     t.value = nil
 }
 
-func (t *Tree) Int(key string) (int, bool) {
-    if v := t.Get(key); v != nil {
-        i, ok := v.(int)
-        return i, ok
-    }
-    return 0, false
-}
-
 func (t *Tree) Int64(key string) (int64, bool) {
     if v := t.Get(key); v != nil {
-        if i, ok := v.(int64); ok {
+        switch i := v.(type) {
+        case int64:
             return i, true
-        }
-        if i, ok := v.(int); ok {
-            return int64(i), ok
+        case int:
+            return int64(i), true
+        case float64:
+            return int64(i), true
+        case string:
+            if ii, err := strconv.ParseInt(i, 10, 0); err == nil {
+                return ii, true
+            }
         }
     }
     return 0, false
@@ -249,18 +248,24 @@ func (t *Tree) Int64(key string) (int64, bool) {
 
 func (t *Tree) Float64(key string) (float64, bool) {
     if v := t.Get(key); v != nil {
-        f, ok := v.(float64)
-        return f, ok
+        switch f := v.(type) {
+        case float64:
+            return f, true
+        case int64:
+            return float64(f), true
+        case int:
+            return float64(f), true
+        case string:
+            if ff, err := strconv.ParseFloat(f, 10); err == nil {
+                return ff, true
+            }
+        }
     }
     return 0, false
 }
 
-func (t *Tree) Bool(key string) (bool, bool) {
-    if v := t.Get(key); v != nil {
-        s, ok := v.(bool)
-        return s, ok
-    }
-    return false, false
+func (t *Tree) Has(key string) bool {
+    return t.Get(key) != nil
 }
 
 func (t *Tree) String(key string) (string, bool) {

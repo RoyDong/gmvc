@@ -35,7 +35,7 @@ func newRedisClient(name string) *redis.Client {
     conf := Store.Tree("config.redis." + name)
     ip, _ := conf.String("ip")
     port, _ := conf.Int64("port")
-    timeout, _ := conf.Int("timeout")
+    timeout, _ := conf.Int64("timeout")
 
     client, err := redis.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), time.Duration(timeout) * time.Second);
     if err != nil {
