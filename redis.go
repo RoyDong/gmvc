@@ -19,7 +19,6 @@ func RedisClient(name string) *redis.Client {
         client = newRedisClient(name)
         redisClients[name] = client
     }
-
     return client
 }
 
