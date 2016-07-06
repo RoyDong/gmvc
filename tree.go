@@ -246,7 +246,25 @@ func (t *Tree) Int64(key string) (int64, bool) {
     return 0, false
 }
 
-func (t *Tree) Float64(key string) (float64, bool) {
+func (t *Tree) Int(key string) (int, bool) {
+    if v := t.Get(key); v != nil {
+        switch i := v.(type) {
+        case int:
+            return i, true
+        case int64:
+            return int(i), true
+        case float64:
+            return int(i), true
+        case string:
+            if ii, err := strconv.ParseInt(i, 10, 0); err == nil {
+                return int(ii), true
+            }
+        }
+    }
+    return 0, false
+}
+
+func (t *Tree) Float(key string) (float64, bool) {
     if v := t.Get(key); v != nil {
         switch f := v.(type) {
         case float64:

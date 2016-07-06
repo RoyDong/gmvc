@@ -20,6 +20,12 @@ func Round(f float64, n int) float64 {
     return f
 }
 
+func Max(x, y int64) int64 {
+    if x >= y {
+        return x
+    }
+    return y
+}
 
 var (
     wsconns = make(map[string]*websocket.Conn)
