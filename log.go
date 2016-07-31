@@ -21,7 +21,9 @@ func initLogger(name string) *log.Logger {
 
     out, err := createLogfile(file)
     if err == nil {
-        return log.New(out, "gmvc", 1)
+        logger := log.New(out, "gmvc", 1)
+        logger.SetFlags(log.LstdFlags)
+        return logger
     }
     return nil
 }

@@ -219,8 +219,10 @@ func (t *Tree) Branches() map[string]*Tree {
 }
 
 func (t *Tree) NodeNum(key string) int {
-    tree := t.find(key)
-    return len(tree.branches)
+    if tree := t.find(key); tree != nil {
+        return len(tree.branches)
+    }
+    return 0
 }
 
 func (t *Tree) Clear() {
